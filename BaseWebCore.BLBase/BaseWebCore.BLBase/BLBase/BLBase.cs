@@ -15,6 +15,8 @@ namespace BaseWebCore.BLBase
     {
         #region Fields and constructor
 
+        private Guid _userID = Guid.Empty;
+
         private TDL _dlObject;
 
         protected IPostgresServices _postgresServices;
@@ -25,6 +27,18 @@ namespace BaseWebCore.BLBase
         public BLBase()
         {
             _postgresServices = new PostgresServices();
+        }
+
+        protected Guid UserID
+        {
+            get
+            {
+                if (_userID == Guid.Empty)
+                {
+                    _userID = Guid.NewGuid();
+                }
+                return _userID;
+            }
         }
 
         protected TDL DLObject 
