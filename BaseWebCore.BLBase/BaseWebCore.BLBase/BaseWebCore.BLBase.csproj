@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BaseWebCore.Common\BaseWebCore.Common.csproj" />
+    <ProjectReference Include="..\..\BaseWebCore.Core\BaseWebCore.Core.csproj" />
     <ProjectReference Include="..\..\BaseWebCore.DLBase\BaseWebCore.DLBase.csproj" />
   </ItemGroup>
 

@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BaseWebCore.DLBase.PostgresSQL
+namespace BaseWebCore.Core.DatabaseServices
 {
-    public interface IPostgresServices
+    public interface IPostgresSQLService
     {
         SqlMapper.GridReader QueryMultiple(IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null);
 

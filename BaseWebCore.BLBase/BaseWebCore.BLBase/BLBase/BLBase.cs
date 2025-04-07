@@ -1,7 +1,8 @@
 ﻿using BaseWebCore.Common.Enum;
 using BaseWebCore.Common.Model;
+using BaseWebCore.Core.DatabaseServices;
+using BaseWebCore.Core.Services;
 using BaseWebCore.DLBase;
-using BaseWebCore.DLBase.PostgresSQL;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,27 +16,33 @@ namespace BaseWebCore.BLBase
     {
         #region Fields and constructor
 
-        private Guid _userID = Guid.Empty;
+        private readonly CoreWebServiceCollection _serviceCollection;
+
+        protected IAuthService _authService { get => _serviceCollection.AuthService(); }
+
+        protected IPostgresSQLService _postgresSQLService { get => _serviceCollection.PostgresSQLService(); }
 
         private TDL _dlObject;
-
-        protected IPostgresServices _postgresServices;
 
         /// <summary>
         /// Phương thức khởi tạo
         /// </summary>
-        public BLBase()
+        public BLBase(CoreWebServiceCollection serviceCollection)
         {
-            _postgresServices = new PostgresServices();
+            _serviceCollection = serviceCollection;
         }
 
+        /// <summary>
+        /// Thông tin UserID
+        /// </summary>
+        private Guid _userID = Guid.Empty;
         protected Guid UserID
         {
             get
             {
                 if (_userID == Guid.Empty)
                 {
-                    _userID = Guid.NewGuid();
+                    _userID = _authService.GetUserID();
                 }
                 return _userID;
             }
@@ -57,7 +64,7 @@ namespace BaseWebCore.BLBase
         /// Khởi tạo DL
         /// </summary>
         /// <returns></returns>
-        abstract public TDL CreateDL();
+        public abstract TDL CreateDL();
 
         #endregion
 
@@ -69,7 +76,7 @@ namespace BaseWebCore.BLBase
         /// <returns></returns>
         public virtual TModel GetByID(Guid id)
         {
-            return _dlObject.GetByID(id);
+            return DLObject.GetByID(id);
         }
 
         /// <summary>
@@ -142,7 +149,7 @@ namespace BaseWebCore.BLBase
                 //Xử lý trước khi Update
                 BeforeUpdate(model);
                 //Thực hiện Update dữ liệu
-                bool result = _dlObject.InsertByState(model);
+                bool result = DLObject.InsertByState(model);
                 res.OnSuccess();
                 //Xử lý sau khi Update
                 AfterUpdate(model, result);
@@ -174,7 +181,7 @@ namespace BaseWebCore.BLBase
                 //Xử lý trước khi Xóa
                 BeforeDelete(model);
                 //Thực hiện Update dữ liệu
-                bool result = _dlObject.Delete(model);
+                bool result = DLObject.Delete(model);
                 res.OnSuccess();
             }
             catch (Exception ex)
@@ -194,7 +201,7 @@ namespace BaseWebCore.BLBase
         /// <param name="view">Chế độ xem</param>
         public PagingResponse GetPaging<T>(int pageIndex, int pageSize, List<FilterCondition> filters, int? viewName, string sort = "")
         {
-            return _dlObject.GetPaging<T>(pageIndex, pageSize, filters, viewName, sort);
+            return DLObject.GetPaging<T>(pageIndex, pageSize, filters, viewName, sort);
         }
 
         #endregion

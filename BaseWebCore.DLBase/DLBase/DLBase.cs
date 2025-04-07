@@ -1,50 +1,24 @@
-﻿using Dapper;
-using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Linq;
-using System.Reflection.Metadata;
+﻿using System.Data;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using BaseWebCore.Common.Model;
-using BaseWebCore.DLBase.PostgresSQL;
 using BaseWebCore.Common.Utils;
 using BaseWebCore.Common.Constant;
 using BaseWebCore.Common.Enum;
+using BaseWebCore.Core.DatabaseServices;
 
 namespace BaseWebCore.DLBase
 {
     public abstract partial class DLBase<TModel> where TModel : BaseModelCore
     {
         #region Constructor and init 
-        protected IPostgresServices _postgresServices;
+        protected IPostgresSQLService _postgresSQLService;
 
         protected string cnnString = string.Empty;
 
-        public DLBase()
+        public DLBase(IPostgresSQLService postgresSQLService)
         {
+            _postgresSQLService = postgresSQLService;
             cnnString = "User ID=postgres;Password=Lehung@181;Host=localhost;Port=5432;Database=db_employee;Pooling=true;";
-            InitDL();
-        }
-
-        /// <summary>
-        /// Init đối tượng thao tác với PostgresSQL
-        /// </summary>
-        protected virtual void InitDL()
-        {
-            _postgresServices = InitPostgresServices();
-        }
-
-        /// <summary>
-        /// Khởi tạo lớp xử lý với DB
-        /// </summary>
-        /// <returns></returns>
-        protected virtual IPostgresServices InitPostgresServices()
-        {
-            return new PostgresServices();
         }
         #endregion
 
@@ -301,7 +275,7 @@ namespace BaseWebCore.DLBase
             try
             {
                 OpenConnection(cnn);
-                return _postgresServices.ExecuteScalar(cnn, sql, param, transaction, commandTimeout, commandType);
+                return _postgresSQLService.ExecuteScalar(cnn, sql, param, transaction, commandTimeout, commandType);
             }
             finally
             {
@@ -321,7 +295,7 @@ namespace BaseWebCore.DLBase
         /// <returns></returns>
         protected int Execute(IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
         {
-            return _postgresServices.Execute(cnn, sql, param, transaction, commandTimeout, commandType);
+            return _postgresSQLService.Execute(cnn, sql, param, transaction, commandTimeout, commandType);
         }
 
         /// <summary>
@@ -341,7 +315,7 @@ namespace BaseWebCore.DLBase
                 List<T> result = new List<T>();
                 if (!string.IsNullOrEmpty(sql))
                 {
-                    result = _postgresServices.Query<T>(cnn, sql, param, transaction, commandTimeout: commandTimeout, commandType: commandType);
+                    result = _postgresSQLService.Query<T>(cnn, sql, param, transaction, commandTimeout: commandTimeout, commandType: commandType);
                 }
                 return result;
             }
@@ -368,7 +342,7 @@ namespace BaseWebCore.DLBase
                 IEnumerable<dynamic> result = new List<dynamic>();
                 if (!string.IsNullOrEmpty(sql))
                 {
-                    result = _postgresServices.Query(cnn, sql, param, transaction, commandTimeout: commandTimeout, commandType: commandType);
+                    result = _postgresSQLService.Query(cnn, sql, param, transaction, commandTimeout: commandTimeout, commandType: commandType);
                 }
                 return result;
             }
@@ -412,7 +386,7 @@ namespace BaseWebCore.DLBase
                 try
                 {
                     OpenConnection(cnn);
-                    result = QueryMultipleCore(cnn, commandType, script.script, script.param, script.types, commandTimeout);
+                    //result = QueryMultipleCore(cnn, commandType, script.script, script.param, script.types, commandTimeout);
                 }
                 finally
                 {
@@ -422,33 +396,33 @@ namespace BaseWebCore.DLBase
             return result;
         }
 
-        private Dictionary<string, List<object>> QueryMultipleCore(IDbConnection cnn, CommandType commandType, string sql, object param, Dictionary<string, Type> types, int? commandTimeout = null)
-        {
-            Dictionary<string, List<object>> result = new Dictionary<string, List<object>>();
+        //private Dictionary<string, List<object>> QueryMultipleCore(IDbConnection cnn, CommandType commandType, string sql, object param, Dictionary<string, Type> types, int? commandTimeout = null)
+        //{
+        //    Dictionary<string, List<object>> result = new Dictionary<string, List<object>>();
 
-            using (var multi = _postgresServices.QueryMultiple(cnn, sql, param, null, commandTimeout, commandType))
-            {
-                DoQueryMultiple(types, result, multi);
-            }
+        //    using (var multi = _postgresSQLService.QueryMultiple(cnn, sql, param, null, commandTimeout, commandType))
+        //    {
+        //        DoQueryMultiple(types, result, multi);
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
-        private void DoQueryMultiple(Dictionary<string, Type> types, Dictionary<string, List<object>> result, SqlMapper.GridReader multi)
-        {
-            if (multi != null)
-            {
-                int index = 0;
-                do
-                {
-                    string typeKey = types.Keys.ToList()[index];
-                    var data = multi.Read(types[typeKey]).ToList();
-                    result.Add(typeKey, data);
-                    index++;
-                }
-                while (!multi.IsConsumed && index < types.Count);
-            }
-        }
+        //private void DoQueryMultiple(Dictionary<string, Type> types, Dictionary<string, List<object>> result, SqlMapper.GridReader multi)
+        //{
+        //    if (multi != null)
+        //    {
+        //        int index = 0;
+        //        do
+        //        {
+        //            string typeKey = types.Keys.ToList()[index];
+        //            var data = multi.Read(types[typeKey]).ToList();
+        //            result.Add(typeKey, data);
+        //            index++;
+        //        }
+        //        while (!multi.IsConsumed && index < types.Count);
+        //    }
+        //}
 
         /// <summary>
         /// Query lấy dữ liệu với DB mặc định
@@ -512,7 +486,7 @@ namespace BaseWebCore.DLBase
         /// <returns></returns>
         public IDbConnection GetConnection()
         {
-            return _postgresServices.GetConnection(cnnString);
+            return _postgresSQLService.GetConnection(cnnString);
         }
 
         /// <summary>

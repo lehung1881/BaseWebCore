@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BaseWebCore.DLBase.PostgresSQL
+namespace BaseWebCore.Core.DatabaseServices
 {
-    public class PostgresServices : IPostgresServices
+    public class PostgresSQLService : IPostgresSQLService
     {
         /// <summary>
         /// Truy vấn lấy dữ liệu
