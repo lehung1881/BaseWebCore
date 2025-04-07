@@ -13,9 +13,9 @@ namespace BaseWebCore.Common.Utils
         /// </summary>
         /// <param name="password"></param>
         /// <returns></returns>
-        //public static string HashPassword(string password)
-        //{
-        //    return BCrypt.Net.BCrypt.HashPassword(password);
-        //}
+        public static string HashPassword(string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password);
+        }
     }
 }
