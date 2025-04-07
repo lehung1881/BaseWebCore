@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace BaseWebCore.BLBase
 {
-    public abstract class BLBase<TModel, TDL> where TModel : BaseModel where TDL : DLBase<TModel>
+    public abstract class BLBase<TModel, TDL> where TModel : BaseModelCore where TDL : DLBase<TModel>
     {
         #region Fields and constructor
 

@@ -11,7 +11,7 @@ using BaseWebCore.Common.Utils;
 
 namespace BaseWebCore.Common.Model
 {
-    public class BaseModel
+    public class BaseModelCore
     {
         [NotMapped]
         public ModelState model_state { get; set; } = ModelState.Insert;

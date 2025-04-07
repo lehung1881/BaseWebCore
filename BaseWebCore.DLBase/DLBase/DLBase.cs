@@ -17,7 +17,7 @@ using BaseWebCore.Common.Enum;
 
 namespace BaseWebCore.DLBase
 {
-    public abstract partial class DLBase<TModel> where TModel : BaseModel
+    public abstract partial class DLBase<TModel> where TModel : BaseModelCore
     {
         #region Constructor and init 
         protected IPostgresServices _postgresServices;
