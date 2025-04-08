@@ -24,6 +24,8 @@ namespace BaseWebCore.BLBase
 
         private TDL _dlObject;
 
+        protected Guid _databaseID = Guid.NewGuid();
+
         /// <summary>
         /// Phương thức khởi tạo
         /// </summary>
@@ -76,7 +78,7 @@ namespace BaseWebCore.BLBase
         /// <returns></returns>
         public virtual TModel GetByID(Guid id)
         {
-            return DLObject.GetByID(id);
+            return _postgresSQLService.GetByID<TModel>(_databaseID, id);
         }
 
         /// <summary>
@@ -111,7 +113,7 @@ namespace BaseWebCore.BLBase
                 //Xử lý trước khi Insert
                 BeforeInsert(model);
                 //Thực hiện Insert dữ liệu
-                bool result = _dlObject.InsertByState(model);
+                bool result = _postgresSQLService.Insert(_databaseID, model);
                 res.OnSuccess();
                 //Xử lý sau khi insert
                 AfterInsert(model, result);
@@ -149,7 +151,7 @@ namespace BaseWebCore.BLBase
                 //Xử lý trước khi Update
                 BeforeUpdate(model);
                 //Thực hiện Update dữ liệu
-                bool result = DLObject.InsertByState(model);
+                bool result = _postgresSQLService.Update(_databaseID, model);
                 res.OnSuccess();
                 //Xử lý sau khi Update
                 AfterUpdate(model, result);
@@ -181,7 +183,7 @@ namespace BaseWebCore.BLBase
                 //Xử lý trước khi Xóa
                 BeforeDelete(model);
                 //Thực hiện Update dữ liệu
-                bool result = DLObject.Delete(model);
+                bool result = _postgresSQLService.Delete(_databaseID, model);
                 res.OnSuccess();
             }
             catch (Exception ex)
@@ -201,7 +203,7 @@ namespace BaseWebCore.BLBase
         /// <param name="view">Chế độ xem</param>
         public PagingResponse GetPaging<T>(int pageIndex, int pageSize, List<FilterCondition> filters, int? viewName, string sort = "")
         {
-            return DLObject.GetPaging<T>(pageIndex, pageSize, filters, viewName, sort);
+            return new PagingResponse();
         }
 
         #endregion

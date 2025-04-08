@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using BaseWebCore.Core.Attribute;
 
 namespace BaseWebCore.Common.Utils
 {
@@ -44,14 +45,14 @@ namespace BaseWebCore.Common.Utils
         public static string GetTableName<TModel>(bool hasSchema = true)
         {
             string tableName = "";
-            var tableAttr = (TableAttribute)typeof(TModel).GetCustomAttributes(typeof(TableAttribute), false).FirstOrDefault();
+            var tableAttr = (ConfigTable)typeof(TModel).GetCustomAttributes(typeof(ConfigTable), false).FirstOrDefault();
             if (hasSchema)
             {
-                tableName = $"{tableAttr.Schema}.{tableAttr.Name}";
+                tableName = $"{tableAttr.Schema}.{tableAttr.TableName}";
             }
             else
             {
-                tableName = $"{tableAttr.Name}";
+                tableName = $"{tableAttr.TableName}";
             }
             return tableName;
         }

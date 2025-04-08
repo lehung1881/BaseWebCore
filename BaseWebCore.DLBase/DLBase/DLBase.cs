@@ -28,103 +28,103 @@ namespace BaseWebCore.DLBase
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public TModel GetByID(Guid id)
-        {
-            var cnn = GetConnection();
-            TModel result;
-            try
-            {
-                OpenConnection(cnn);
-                string tableName = ModelHelper.GetTableName<TModel>();
-                string primaryKey = ModelHelper.GetPrimaryKeyFiled(typeof(TModel));
-                result = GetByListID<TModel>(new List<Guid> { id }, tableName, primaryKey)[0];
-            }
-            finally
-            {
-                CloseConnection(cnn);
-            }
-            return result;
-        }
+        //public TModel GetByID(Guid id)
+        //{
+        //    var cnn = GetConnection();
+        //    TModel result;
+        //    try
+        //    {
+        //        OpenConnection(cnn);
+        //        string tableName = ModelHelper.GetTableName<TModel>();
+        //        string primaryKey = ModelHelper.GetPrimaryKeyFiled(typeof(TModel));
+        //        result = GetByListID<TModel>(new List<Guid> { id }, tableName, primaryKey)[0];
+        //    }
+        //    finally
+        //    {
+        //        CloseConnection(cnn);
+        //    }
+        //    return result;
+        //}
 
-        /// <summary>
-        /// Lấy dữ liệu 1 bảng theo list id
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="ids"></param>
-        /// <param name="tableName"></param>
-        /// <param name="primaryKey"></param>
-        /// <returns></returns>
-        public List<T> GetByListID<T>(List<Guid> ids, string tableName, string primaryKey)
-        {
-            var script = new DBScriptHelper();
-            script.script = $"select * from {tableName} where {primaryKey} = any(:ids);";
-            script.AppendParam("ids", ids);
-            var result = Query<T>(CommandType.Text, script.script, script.param);
-            return result.ToList();
-        }
+        ///// <summary>
+        ///// Lấy dữ liệu 1 bảng theo list id
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="ids"></param>
+        ///// <param name="tableName"></param>
+        ///// <param name="primaryKey"></param>
+        ///// <returns></returns>
+        //public List<T> GetByListID<T>(List<Guid> ids, string tableName, string primaryKey)
+        //{
+        //    var script = new DBScriptHelper();
+        //    script.script = $"select * from {tableName} where {primaryKey} = any(:ids);";
+        //    script.AppendParam("ids", ids);
+        //    var result = Query<T>(CommandType.Text, script.script, script.param);
+        //    return result.ToList();
+        //}
 
-        /// <summary>
-        /// Thêm mới 1 bản ghi
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        public bool InsertByState(TModel model)
-        {
-            return InsertData(model);
-        }
+        ///// <summary>
+        ///// Thêm mới 1 bản ghi
+        ///// </summary>
+        ///// <param name="model"></param>
+        ///// <returns></returns>
+        //public bool InsertByState(TModel model)
+        //{
+        //    return InsertData(model);
+        //}
 
-        /// <summary>
-        /// Xóa 1 bản ghi
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        public bool Delete(TModel model)
-        {
-            var script = GenerateScriptDelete(model);
-            return Execute(CommandType.Text, script.script, script.param);
-        }
+        ///// <summary>
+        ///// Xóa 1 bản ghi
+        ///// </summary>
+        ///// <param name="model"></param>
+        ///// <returns></returns>
+        //public bool Delete(TModel model)
+        //{
+        //    var script = GenerateScriptDelete(model);
+        //    return Execute(CommandType.Text, script.script, script.param);
+        //}
 
-        /// <summary>
-        /// Lấy phân trang
-        /// </summary>
-        /// <typeparam name="TModel"></typeparam>
-        /// <param name="pageIndex"></param>
-        /// <param name="pageSize"></param>
-        /// <param name="filter"></param>
-        /// <param name="sort"></param>
-        /// <param name="view"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public PagingResponse GetPaging<T>(int pageIndex, int pageSize, List<FilterCondition> filters, int? viewName, string sort = "")
-        {
-            DBScriptHelper script = GetPagingScript<T>(pageIndex, pageSize, filters, viewName, sort);
-            return DoGetPaging(script);
-        }
+        ///// <summary>
+        ///// Lấy phân trang
+        ///// </summary>
+        ///// <typeparam name="TModel"></typeparam>
+        ///// <param name="pageIndex"></param>
+        ///// <param name="pageSize"></param>
+        ///// <param name="filter"></param>
+        ///// <param name="sort"></param>
+        ///// <param name="view"></param>
+        ///// <returns></returns>
+        ///// <exception cref="Exception"></exception>
+        //public PagingResponse GetPaging<T>(int pageIndex, int pageSize, List<FilterCondition> filters, int? viewName, string sort = "")
+        //{
+        //    DBScriptHelper script = GetPagingScript<T>(pageIndex, pageSize, filters, viewName, sort);
+        //    return DoGetPaging(script);
+        //}
 
-        /// <summary>
-        /// Thực hiện lấy dữ liệu
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="scriptPaging"></param>
-        /// <returns></returns>
-        public PagingResponse DoGetPaging(DBScriptHelper scriptPaging)
-        {
-            PagingResponse result = new PagingResponse();
-            Dictionary<string, List<object>> data = QueryMultiple(CommandType.Text, scriptPaging);
+        ///// <summary>
+        ///// Thực hiện lấy dữ liệu
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="scriptPaging"></param>
+        ///// <returns></returns>
+        //public PagingResponse DoGetPaging(DBScriptHelper scriptPaging)
+        //{
+        //    PagingResponse result = new PagingResponse();
+        //    Dictionary<string, List<object>> data = QueryMultiple(CommandType.Text, scriptPaging);
 
-            if (data.ContainsKey("PageData"))
-            {
-                result.PageData = data["PageData"];
-            }
+        //    if (data.ContainsKey("PageData"))
+        //    {
+        //        result.PageData = data["PageData"];
+        //    }
 
-            if (data.ContainsKey("Total"))
-            {
-                result.Total = data["Total"].Cast<TotalData>().FirstOrDefault().Total;
+        //    if (data.ContainsKey("Total"))
+        //    {
+        //        result.Total = data["Total"].Cast<TotalData>().FirstOrDefault().Total;
 
-            }
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
         /// <summary>
         /// Thực hiện tạo script lấy phân trang
@@ -245,20 +245,20 @@ namespace BaseWebCore.DLBase
         #endregion
 
         #region Methods base
-        protected bool Execute(CommandType? commandType, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            var cnn = GetConnection();
-            try
-            {
-                OpenConnection(cnn);
-                var result = Execute(cnn, sql, param, transaction, commandTimeout, commandType);
-            }
-            finally
-            {
-                CloseConnection(cnn);
-            }
-            return true;
-        }
+        //protected bool Execute(CommandType? commandType, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        //{
+        //    var cnn = GetConnection();
+        //    try
+        //    {
+        //        OpenConnection(cnn);
+        //        var result = Execute(cnn, sql, param, transaction, commandTimeout, commandType);
+        //    }
+        //    finally
+        //    {
+        //        CloseConnection(cnn);
+        //    }
+        //    return true;
+        //}
 
         /// <summary>
         /// Thực thì câu lệnh trả về 1 giá trị
@@ -269,19 +269,19 @@ namespace BaseWebCore.DLBase
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        protected object ExecuteScalar(CommandType commandType, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            var cnn = GetConnection();
-            try
-            {
-                OpenConnection(cnn);
-                return _postgresSQLService.ExecuteScalar(cnn, sql, param, transaction, commandTimeout, commandType);
-            }
-            finally
-            {
-                CloseConnection(cnn);
-            }
-        }
+        //protected object ExecuteScalar(CommandType commandType, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null)
+        //{
+        //    var cnn = GetConnection();
+        //    try
+        //    {
+        //        OpenConnection(cnn);
+        //        return _postgresSQLService.ExecuteScalar(cnn, sql, param, transaction, commandTimeout, commandType);
+        //    }
+        //    finally
+        //    {
+        //        CloseConnection(cnn);
+        //    }
+        //}
 
         /// <summary>
         /// Thực thi câu lệnh
@@ -293,10 +293,10 @@ namespace BaseWebCore.DLBase
         /// <param name="commandTimeout"></param>
         /// <param name="commandType"></param>
         /// <returns></returns>
-        protected int Execute(IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
-        {
-            return _postgresSQLService.Execute(cnn, sql, param, transaction, commandTimeout, commandType);
-        }
+        //protected int Execute(IDbConnection cnn, string sql, object param = null, IDbTransaction transaction = null, int? commandTimeout = null, CommandType? commandType = null)
+        //{
+        //    return _postgresSQLService.Execute(cnn, sql, param, transaction, commandTimeout, commandType);
+        //}
 
         /// <summary>
         /// Query lấy dữ liệu có thể custom cnn
@@ -308,22 +308,22 @@ namespace BaseWebCore.DLBase
         /// <param name="param"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        protected List<T> Query<T>(CommandType commandType, IDbConnection cnn, IDbTransaction transaction, string sql, object param = null, int? commandTimeout = Constants.TimeoutNone)
-        {
-            try
-            {
-                List<T> result = new List<T>();
-                if (!string.IsNullOrEmpty(sql))
-                {
-                    result = _postgresSQLService.Query<T>(cnn, sql, param, transaction, commandTimeout: commandTimeout, commandType: commandType);
-                }
-                return result;
-            }
-            finally
-            {
+        //protected List<T> Query<T>(CommandType commandType, IDbConnection cnn, IDbTransaction transaction, string sql, object param = null, int? commandTimeout = Constants.TimeoutNone)
+        //{
+        //    try
+        //    {
+        //        List<T> result = new List<T>();
+        //        if (!string.IsNullOrEmpty(sql))
+        //        {
+        //            result = _postgresSQLService.Query<T>(cnn, sql, param, transaction, commandTimeout: commandTimeout, commandType: commandType);
+        //        }
+        //        return result;
+        //    }
+        //    finally
+        //    {
 
-            }
-        }
+        //    }
+        //}
 
         /// <summary>
         /// Query lấy dữ liệu có thể custom cnn
@@ -335,19 +335,19 @@ namespace BaseWebCore.DLBase
         /// <param name="param"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        protected IEnumerable<dynamic> QueryDynamic(CommandType commandType, IDbConnection cnn, IDbTransaction transaction, string sql, object param = null, int commandTimeout = Constants.TimeoutNone)
-        {
-            try
-            {
-                IEnumerable<dynamic> result = new List<dynamic>();
-                if (!string.IsNullOrEmpty(sql))
-                {
-                    result = _postgresSQLService.Query(cnn, sql, param, transaction, commandTimeout: commandTimeout, commandType: commandType);
-                }
-                return result;
-            }
-            finally { }
-        }
+        //protected IEnumerable<dynamic> QueryDynamic(CommandType commandType, IDbConnection cnn, IDbTransaction transaction, string sql, object param = null, int commandTimeout = Constants.TimeoutNone)
+        //{
+        //    try
+        //    {
+        //        IEnumerable<dynamic> result = new List<dynamic>();
+        //        if (!string.IsNullOrEmpty(sql))
+        //        {
+        //            result = _postgresSQLService.Query(cnn, sql, param, transaction, commandTimeout: commandTimeout, commandType: commandType);
+        //        }
+        //        return result;
+        //    }
+        //    finally { }
+        //}
 
         /// <summary>
         /// Query lấy dữ liệu với DB mặc định
@@ -358,43 +358,43 @@ namespace BaseWebCore.DLBase
         /// <param name="param"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        protected List<T> Query<T>(CommandType commandType, string sql, object param, int? commandTimeout = null)
-        {
-            List<T> result = new List<T>();
-            if (!string.IsNullOrEmpty(sql))
-            {
-                var cnn = GetConnection();
-                try
-                {
-                    OpenConnection(cnn);
-                    result = Query<T>(commandType, cnn, null, sql, param, commandTimeout);
-                }
-                finally
-                {
-                    CloseConnection(cnn);
-                }
-            }
-            return result;
-        }
+        //protected List<T> Query<T>(CommandType commandType, string sql, object param, int? commandTimeout = null)
+        //{
+        //    List<T> result = new List<T>();
+        //    if (!string.IsNullOrEmpty(sql))
+        //    {
+        //        var cnn = GetConnection();
+        //        try
+        //        {
+        //            OpenConnection(cnn);
+        //            result = Query<T>(commandType, cnn, null, sql, param, commandTimeout);
+        //        }
+        //        finally
+        //        {
+        //            CloseConnection(cnn);
+        //        }
+        //    }
+        //    return result;
+        //}
 
-        protected Dictionary<string, List<object>> QueryMultiple(CommandType commandType, DBScriptHelper script, int? commandTimeout = null)
-        {
-            Dictionary<string, List<object>> result = new Dictionary<string, List<object>>();
-            if (!string.IsNullOrEmpty(script.script))
-            {
-                var cnn = GetConnection();
-                try
-                {
-                    OpenConnection(cnn);
-                    //result = QueryMultipleCore(cnn, commandType, script.script, script.param, script.types, commandTimeout);
-                }
-                finally
-                {
-                    CloseConnection(cnn);
-                }
-            }
-            return result;
-        }
+        //protected Dictionary<string, List<object>> QueryMultiple(CommandType commandType, DBScriptHelper script, int? commandTimeout = null)
+        //{
+        //    Dictionary<string, List<object>> result = new Dictionary<string, List<object>>();
+        //    if (!string.IsNullOrEmpty(script.script))
+        //    {
+        //        var cnn = GetConnection();
+        //        try
+        //        {
+        //            OpenConnection(cnn);
+        //            //result = QueryMultipleCore(cnn, commandType, script.script, script.param, script.types, commandTimeout);
+        //        }
+        //        finally
+        //        {
+        //            CloseConnection(cnn);
+        //        }
+        //    }
+        //    return result;
+        //}
 
         //private Dictionary<string, List<object>> QueryMultipleCore(IDbConnection cnn, CommandType commandType, string sql, object param, Dictionary<string, Type> types, int? commandTimeout = null)
         //{
@@ -433,61 +433,61 @@ namespace BaseWebCore.DLBase
         /// <param name="param"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        protected IEnumerable<dynamic> QueryDynamic(CommandType commandType, string sql, object param, int commandTimeout = Constants.TimeoutNone)
-        {
-            IEnumerable<dynamic> result = new List<dynamic>();
-            if (!string.IsNullOrEmpty(sql))
-            {
-                var cnn = GetConnection();
-                try
-                {
-                    OpenConnection(cnn);
-                    result = QueryDynamic(commandType, cnn, null, sql, param, commandTimeout);
-                }
-                finally
-                {
-                    CloseConnection(cnn);
-                }
-            }
-            return result;
-        }
+        //protected IEnumerable<dynamic> QueryDynamic(CommandType commandType, string sql, object param, int commandTimeout = Constants.TimeoutNone)
+        //{
+        //    IEnumerable<dynamic> result = new List<dynamic>();
+        //    if (!string.IsNullOrEmpty(sql))
+        //    {
+        //        var cnn = GetConnection();
+        //        try
+        //        {
+        //            OpenConnection(cnn);
+        //            result = QueryDynamic(commandType, cnn, null, sql, param, commandTimeout);
+        //        }
+        //        finally
+        //        {
+        //            CloseConnection(cnn);
+        //        }
+        //    }
+        //    return result;
+        //}
 
         /// <summary>
         /// Hàm đóng kết nối đến DB
         /// </summary>
         /// <param name="cnn"></param>
-        protected void CloseConnection(IDbConnection cnn)
-        {
-            if (cnn != null)
-            {
-                if (cnn.State != ConnectionState.Closed)
-                {
-                    cnn.Close();
-                }
-                cnn.Dispose();
-            }
-        }
+        //protected void CloseConnection(IDbConnection cnn)
+        //{
+        //    if (cnn != null)
+        //    {
+        //        if (cnn.State != ConnectionState.Closed)
+        //        {
+        //            cnn.Close();
+        //        }
+        //        cnn.Dispose();
+        //    }
+        //}
 
         /// <summary>
         /// Hàm mở kết nối đến DB
         /// </summary>
         /// <param name="cnn"></param>
-        public void OpenConnection(IDbConnection cnn)
-        {
-            if (cnn.State != ConnectionState.Open)
-            {
-                cnn.Open();
-            }
-        }
+        //public void OpenConnection(IDbConnection cnn)
+        //{
+        //    if (cnn.State != ConnectionState.Open)
+        //    {
+        //        cnn.Open();
+        //    }
+        //}
 
         /// <summary>
         /// Fix tạm chuỗi kết nối
         /// </summary>
         /// <returns></returns>
-        public IDbConnection GetConnection()
-        {
-            return _postgresSQLService.GetConnection(cnnString);
-        }
+        //public IDbConnection GetConnection()
+        //{
+        //    return _postgresSQLService.GetConnection(cnnString);
+        //}
 
         /// <summary>
         /// Lấy ra script phân trang
@@ -570,21 +570,21 @@ namespace BaseWebCore.DLBase
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool InsertData(TModel model)
-        {
-            var cnn = GetConnection();
-            bool result = false;
-            try
-            {
-                OpenConnection(cnn);
-                result = DoInsertData(cnn, model);
-            }
-            finally
-            {
-                CloseConnection(cnn);
-            }
-            return result;
-        }
+        //public bool InsertData(TModel model)
+        //{
+        //    var cnn = GetConnection();
+        //    bool result = false;
+        //    try
+        //    {
+        //        OpenConnection(cnn);
+        //        result = DoInsertData(cnn, model);
+        //    }
+        //    finally
+        //    {
+        //        CloseConnection(cnn);
+        //    }
+        //    return result;
+        //}
 
         /// <summary>
         /// Thực hiện Insert bản ghi vào db
@@ -593,33 +593,33 @@ namespace BaseWebCore.DLBase
         /// <param name="cnn"></param>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool DoInsertData(IDbConnection cnn, TModel model)
-        {
-            string tableName = ModelHelper.GetTableName<TModel>();
-            string primaryKey = ModelHelper.GetPrimaryKeyFiled(typeof(TModel));
+        //public bool DoInsertData(IDbConnection cnn, TModel model)
+        //{
+        //    string tableName = ModelHelper.GetTableName<TModel>();
+        //    string primaryKey = ModelHelper.GetPrimaryKeyFiled(typeof(TModel));
 
-            var script = new DBScriptHelper();
-            if (model.model_state == ModelState.Insert)
-            {
-                script = GenerateScriptInsert(model, primaryKey, tableName);
-            }
-            else
-            {
-                script = GenerateScriptUpdate(model, primaryKey, tableName);
-            }
-            return Execute(cnn, script.script, script.param) > 0;
-        }
+        //    var script = new DBScriptHelper();
+        //    if (model.model_state == ModelState.Insert)
+        //    {
+        //        script = GenerateScriptInsert(model, primaryKey, tableName);
+        //    }
+        //    else
+        //    {
+        //        script = GenerateScriptUpdate(model, primaryKey, tableName);
+        //    }
+        //    return Execute(cnn, script.script, script.param) > 0;
+        //}
 
-        public DBScriptHelper GenerateScriptDelete(TModel model)
-        {
-            string tableName = ModelHelper.GetTableName<TModel>();
-            string primaryKey = ModelHelper.GetPrimaryKeyFiled(typeof(TModel));
-            var scripts = new DBScriptHelper();
-            scripts.script = $"delete from {tableName} where {primaryKey} = :p_id";
-            var id = model.GetPrimaryKeyValue();
-            scripts.AppendParam("p_id", id);
-            return scripts;
-        }
+        //public DBScriptHelper GenerateScriptDelete(TModel model)
+        //{
+        //    string tableName = ModelHelper.GetTableName<TModel>();
+        //    string primaryKey = ModelHelper.GetPrimaryKeyFiled(typeof(TModel));
+        //    var scripts = new DBScriptHelper();
+        //    scripts.script = $"delete from {tableName} where {primaryKey} = :p_id";
+        //    var id = model.GetPrimaryKeyValue();
+        //    scripts.AppendParam("p_id", id);
+        //    return scripts;
+        //}
 
         /// <summary>
         /// Tạo câu insert để thêm dữ liệu vào db
@@ -629,92 +629,92 @@ namespace BaseWebCore.DLBase
         /// <param name="primaryKey"></param>
         /// <param name="tableName"></param>
         /// <returns></returns>
-        public DBScriptHelper GenerateScriptInsert(TModel model, string primaryKey, string tableName)
-        {
-            var fileds = ModelHelper.GetFieldInsert(model.GetType());
+        //public DBScriptHelper GenerateScriptInsert(TModel model, string primaryKey, string tableName)
+        //{
+        //    var fileds = ModelHelper.GetFieldInsert(model.GetType());
 
-            List<string> filedColumns = new List<string>();
-            List<string> filedColParams = new List<string>();
+        //    List<string> filedColumns = new List<string>();
+        //    List<string> filedColParams = new List<string>();
 
-            var scripts = new DBScriptHelper();
+        //    var scripts = new DBScriptHelper();
 
-            foreach (KeyValuePair<string, PropertyInfo> cols in fileds)
-            {
-                filedColumns.Add(cols.Key);
-                filedColParams.Add($":p_{cols.Key}");
+        //    foreach (KeyValuePair<string, PropertyInfo> cols in fileds)
+        //    {
+        //        filedColumns.Add(cols.Key);
+        //        filedColParams.Add($":p_{cols.Key}");
 
-                object value = cols.Value.GetValue(model);
+        //        object value = cols.Value.GetValue(model);
 
-                if (cols.Key == primaryKey && ((Guid)value == Guid.Empty || value == null))
-                {
+        //        if (cols.Key == primaryKey && ((Guid)value == Guid.Empty || value == null))
+        //        {
                     
-                    value = Guid.NewGuid();
-                } 
-                else if(cols.Key == "created_date" || cols.Key == "modified_date")
-                {
-                    value = DateTime.Now;
-                }
-                else if (cols.Key == "created_by" || cols.Key == "modified_by")
-                {
-                    value = "Hệ thống";
-                }
-                scripts.AppendParam($"p_{cols.Key}", value);
-            }
+        //            value = Guid.NewGuid();
+        //        } 
+        //        else if(cols.Key == "created_date" || cols.Key == "modified_date")
+        //        {
+        //            value = DateTime.Now;
+        //        }
+        //        else if (cols.Key == "created_by" || cols.Key == "modified_by")
+        //        {
+        //            value = "Hệ thống";
+        //        }
+        //        scripts.AppendParam($"p_{cols.Key}", value);
+        //    }
 
-            scripts.script = $@"insert into {tableName} ({string.Join(", ", filedColumns)}) values({string.Join(", ", filedColParams)});";
+        //    scripts.script = $@"insert into {tableName} ({string.Join(", ", filedColumns)}) values({string.Join(", ", filedColParams)});";
 
-            return scripts;
-        }
+        //    return scripts;
+        //}
 
-        /// <summary>
-        /// Tạo câu lệnh cập nhật dữ liệu
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="model"></param>
-        /// <param name="primaryKey"></param>
-        /// <param name="tableName"></param>
-        /// <returns></returns>
-        public DBScriptHelper GenerateScriptUpdate(TModel model, string primaryKey, string tableName, List<string> columnsNotUpdate = null)
-        {
-            var fileds = ModelHelper.GetFieldInsert(model.GetType());
-            List<string> updateColumns = new List<string>();
+        ///// <summary>
+        ///// Tạo câu lệnh cập nhật dữ liệu
+        ///// </summary>
+        ///// <typeparam name="T"></typeparam>
+        ///// <param name="model"></param>
+        ///// <param name="primaryKey"></param>
+        ///// <param name="tableName"></param>
+        ///// <returns></returns>
+        //public DBScriptHelper GenerateScriptUpdate(TModel model, string primaryKey, string tableName, List<string> columnsNotUpdate = null)
+        //{
+        //    var fileds = ModelHelper.GetFieldInsert(model.GetType());
+        //    List<string> updateColumns = new List<string>();
 
-            var scripts = new DBScriptHelper();
+        //    var scripts = new DBScriptHelper();
 
-            foreach (KeyValuePair<string, PropertyInfo> cols in fileds)
-            {
-                string columnName = cols.Key;
+        //    foreach (KeyValuePair<string, PropertyInfo> cols in fileds)
+        //    {
+        //        string columnName = cols.Key;
 
-                //Loại bỏ những cột không cần update
-                if (columnsNotUpdate != null && columnsNotUpdate.Count > 0 && columnName != primaryKey)
-                {
-                    if (columnsNotUpdate.Contains(columnName)) continue;
-                }
+        //        //Loại bỏ những cột không cần update
+        //        if (columnsNotUpdate != null && columnsNotUpdate.Count > 0 && columnName != primaryKey)
+        //        {
+        //            if (columnsNotUpdate.Contains(columnName)) continue;
+        //        }
 
-                object value = cols.Value.GetValue(model);
+        //        object value = cols.Value.GetValue(model);
 
-                //Không cập nhật những trường null
-                if (value == null || columnName == "created_date" || columnName == "created_by") continue;
+        //        //Không cập nhật những trường null
+        //        if (value == null || columnName == "created_date" || columnName == "created_by") continue;
 
-                if (columnName == "modified_date")
-                {
-                    value = DateTime.Now;
-                }
+        //        if (columnName == "modified_date")
+        //        {
+        //            value = DateTime.Now;
+        //        }
 
-                if (columnName != primaryKey)
-                {
-                    updateColumns.Add($"{columnName} = :p_{columnName}");
-                    scripts.AppendParam($"p_{columnName}", value);
-                }
-                else
-                {
-                    scripts.AppendParam($"p_{primaryKey}", value);
-                }
-            }
+        //        if (columnName != primaryKey)
+        //        {
+        //            updateColumns.Add($"{columnName} = :p_{columnName}");
+        //            scripts.AppendParam($"p_{columnName}", value);
+        //        }
+        //        else
+        //        {
+        //            scripts.AppendParam($"p_{primaryKey}", value);
+        //        }
+        //    }
 
-            scripts.script = $@"update {tableName} a set {string.Join(", ", updateColumns)} where {primaryKey} = :p_{primaryKey};";
-            return scripts;
-        }
+        //    scripts.script = $@"update {tableName} a set {string.Join(", ", updateColumns)} where {primaryKey} = :p_{primaryKey};";
+        //    return scripts;
+        //}
         #endregion
     }
 }

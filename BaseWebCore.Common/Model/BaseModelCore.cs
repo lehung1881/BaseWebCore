@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using BaseWebCore.Common.Enum;
 using BaseWebCore.Common.Utils;
+using BaseWebCore.Core.Attribute;
 
 namespace BaseWebCore.Common.Model
 {
@@ -22,17 +23,19 @@ namespace BaseWebCore.Common.Model
         /// </summary>
         /// <param name="hasSchema"></param>
         /// <returns></returns>
-        public string GetTableName(bool hasSchema = true)
+        public string GetViewOrTableName(bool hasSchema = true)
         {
             string tableName = "";
-            var tableAttr = (TableAttribute)GetType().GetCustomAttributes(typeof(TableAttribute), false).FirstOrDefault();
+            var tableAttr = (ConfigTable)GetType().GetCustomAttributes(typeof(ConfigTable), false).FirstOrDefault();
+
+            string viewOrTabble = !string.IsNullOrEmpty(tableAttr.ViewName) ? tableAttr.ViewName : tableAttr.TableName;
             if (hasSchema)
             {
-                tableName = $"{tableAttr.Schema}.{tableAttr.Name}";
+                tableName = $"{tableAttr.Schema}.{viewOrTabble}";
             }
             else
             {
-                tableName = $"{tableAttr.Name}";
+                tableName = $"{viewOrTabble}";
             }
             return tableName;
         }
