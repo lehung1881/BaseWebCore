@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BASE.Service.Core.BL\BASE.Service.Core.BL.csproj" />
+    <ProjectReference Include="..\BASE.Service.Core.Database\BASE.Service.Core.Database.csproj" />
+    <ProjectReference Include="..\BASE.Service.Core.Model\BASE.Service.Core.Model.csproj" />
+    <ProjectReference Include="..\BASE.Service.Core\BASE.Service.Core.csproj" />
+  </ItemGroup>
+
+</Project>
