@@ -12,7 +12,7 @@ using BASE.Service.Core.Services;
 using Npgsql;
 using BASE.Service.Core.Attribute;
 
-namespace BASE.Service.Core.Database.Services
+namespace BASE.Service.Core.Database
 {
     public partial class PostgresSQLService
     {

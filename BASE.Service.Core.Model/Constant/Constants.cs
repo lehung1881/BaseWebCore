@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BaseWebCore.Common.Constant
+namespace BASE.Service.Core.Model.Constant
 {
     public class Constants
     {

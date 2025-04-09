@@ -1,16 +1,12 @@
-﻿using BaseWebCore.Core;
-using BaseWebCore.Core.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using BaseWebCore.BLBase;
 
-namespace BaseWebCore.Web
+namespace BASE.Service.Core.Web
 {
     public class BaseStartupServices
     {
@@ -52,13 +48,13 @@ namespace BaseWebCore.Web
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             //Add core Services
-            builder.Services.UseCoreServices();
+            //builder.Services.UseCoreServices();
 
             //Add BL Services
-            builder.Services.UseCoreBLServices();
+            //builder.Services.UseCoreBLServices();
 
             //Add services
-            builder.Services.UseWebCoreServices();
+            builder.Services.UseWebCoreServices(configuration);
         }
 
         public static void ConfigureApp(WebApplication app)

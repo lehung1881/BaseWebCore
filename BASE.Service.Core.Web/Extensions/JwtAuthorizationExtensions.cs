@@ -19,16 +19,9 @@ namespace BASE.Service.Core.Web
         /// <returns>Trả về IServiceCollection đã được cấu hình xác thực JWT.</returns>
         public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration config)
         {
-            // Đọc section "AppSettings" từ cấu hình.
             var appsettings = config.GetSection("AppSettings");
-
-            // Cấu hình JSON serializer không thay đổi casing của property names.
             services.AddControllers().AddJsonOptions(opt => opt.JsonSerializerOptions.PropertyNamingPolicy = null);
-
-            // Lấy khóa bí mật dùng để mã hóa token từ cấu hình.
             var key = Encoding.ASCII.GetBytes(appsettings["JWTConfig:TokenKey"]);
-
-            // Cấu hình dịch vụ xác thực với JWT Bearer
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(option =>
             {
                 option.TokenValidationParameters = new TokenValidationParameters

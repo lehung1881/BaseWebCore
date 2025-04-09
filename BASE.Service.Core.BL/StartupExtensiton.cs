@@ -1,20 +1,15 @@
-﻿using BaseWebCore.Core.DatabaseServices;
-using BaseWebCore.Core.Services;
+﻿using BASE.Service.Core.Database;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
-namespace BaseWebCore.Core
+namespace BASE.Service.Core.BL
 {
     public static class StartupExtensiton
     {
-        public static void UseCoreServices(this IServiceCollection service)
+        public static void UseBLServices(this IServiceCollection service, IConfiguration configuration)
         {
-            service.AddTransient<IAuthService, AuthService>();
-            service.AddTransient<IPostgresSQLService, PostgresSQLService>();
+            service.UseCoreServices();
+            service.UseDatabaseServices();
         }
     }
 }
