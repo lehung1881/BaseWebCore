@@ -20,7 +20,7 @@ namespace BASE.Service.Core.Model
         /// Danh sách cột update
         /// </summary>
         [NotMapped]
-        public List<string> UpdateColumns { get; set; } = null;
+        public List<string> UpdateColumns { get; set; }
 
         #region Method
         /// <summary>

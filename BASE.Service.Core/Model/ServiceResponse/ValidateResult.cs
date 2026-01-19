@@ -21,5 +21,5 @@
         /// Dữ liệu tùy biến mang thêm
         /// </summary>
         public object AdditionInfo { get; set; }
-        }
+    }
 }
