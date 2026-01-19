@@ -1,4 +1,4 @@
-﻿using BASE.Service.Core.Attribute;
+using BASE.Service.Core.Attribute;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,12 +11,42 @@ using BASE.Service.Core.Enum;
 
 namespace BASE.Service.Core.Model
 {
-    public class BaseModelCore
+    public class BaseModel
     {
         [NotMapped]
         public ModelState ModelState { get; set; } = ModelState.Insert;
 
         #region Method
+        /// <summary>
+        /// Set giá trị
+        /// </summary>
+        /// <param name="value"></param>
+        public void SetPrimaryKey(string value)
+        {
+            PropertyInfo[] props = this.GetType().GetProperties();
+
+            PropertyInfo propertyInfoKey = null;
+            if (props != null)
+            {
+                propertyInfoKey = props.SingleOrDefault(
+                    p => p.GetCustomAttribute<KeyAttribute>(true) != null
+                );
+
+                if (propertyInfoKey != null)
+                {
+                    if (propertyInfoKey.PropertyType == typeof(long))
+                        propertyInfoKey.SetValue(this, long.Parse(value));
+                    else if (propertyInfoKey.PropertyType == typeof(int))
+                        propertyInfoKey.SetValue(this, int.Parse(value));
+                    else if (propertyInfoKey.PropertyType == typeof(Guid))
+                        propertyInfoKey.SetValue(this, Guid.Parse(value));
+                    else
+                        propertyInfoKey.SetValue(this, value);
+                }
+            }
+        }
+
+
         /// <summary>
         /// Lấy tên bảng trong Database
         /// </summary>
@@ -24,19 +54,9 @@ namespace BASE.Service.Core.Model
         /// <returns></returns>
         public string GetViewOrTableName(bool hasSchema = true)
         {
-            string tableName = "";
             var tableAttr = (ConfigTable)GetType().GetCustomAttributes(typeof(ConfigTable), false).FirstOrDefault();
-
             string viewOrTabble = !string.IsNullOrEmpty(tableAttr.ViewName) ? tableAttr.ViewName : tableAttr.TableName;
-            if (hasSchema)
-            {
-                tableName = $"{tableAttr.Schema}.{viewOrTabble}";
-            }
-            else
-            {
-                tableName = $"{viewOrTabble}";
-            }
-            return tableName;
+            return viewOrTabble;
         }
 
         /// <summary>

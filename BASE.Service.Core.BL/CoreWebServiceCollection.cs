@@ -1,10 +1,5 @@
 ﻿using BASE.Service.Core.Services;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BASE.Service.Core.BL
 {
@@ -32,14 +27,17 @@ namespace BASE.Service.Core.BL
             return _authService;
         }
 
-        private IPostgresSQLService _postgresSQLService;
-        public IPostgresSQLService PostgresSQLService()
+        /// <summary>
+        /// Lấy đối tượng thao tác với MySQL
+        /// </summary>
+        private IMySQLService _mySQLService;
+        public IMySQLService MySQLService()
         {
-            if (_postgresSQLService == null)
+            if (_mySQLService == null)
             {
-                _postgresSQLService = GetService<IPostgresSQLService>();
+                _mySQLService = GetService<IMySQLService>();
             }
-            return _postgresSQLService;
+            return _mySQLService;
         }
     }
 }

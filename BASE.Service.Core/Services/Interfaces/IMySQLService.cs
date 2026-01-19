@@ -7,6 +7,13 @@ namespace BASE.Service.Core.Services
     public interface IMySQLService
     {
         /// <summary>
+        /// Lấy connection string
+        /// </summary>
+        /// <param name="databaseID"></param>
+        /// <returns></returns>
+        IDbConnection GetConnection(Guid databaseID);
+
+        /// <summary>
         /// Truy vấn lấy dữ liệu
         /// </summary>
         /// <param name="databaseID">ID của database</param>
