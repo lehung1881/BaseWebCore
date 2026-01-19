@@ -26,6 +26,8 @@ namespace BASE.Service.Core.Enum
         Insert = 0,
 
         Update = 1,
+
+        Delete = 2,
     }
 
     public enum EnumFilterCondition : int

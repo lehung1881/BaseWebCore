@@ -16,6 +16,12 @@ namespace BASE.Service.Core.Model
         [NotMapped]
         public ModelState ModelState { get; set; } = ModelState.Insert;
 
+        /// <summary>
+        /// Danh sách cột update
+        /// </summary>
+        [NotMapped]
+        public List<string> UpdateColumns { get; set; } = null;
+
         #region Method
         /// <summary>
         /// Set giá trị

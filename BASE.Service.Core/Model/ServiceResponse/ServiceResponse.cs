@@ -15,6 +15,7 @@ namespace BASE.Service.Core.Model
         public string Message { get; set; }
         public object ErrorMessage { get; set; }
         public object Data { get; set; }
+        public List<ValidateResult> ValidateInfo { get; set; }
         #endregion
 
         #region Method
