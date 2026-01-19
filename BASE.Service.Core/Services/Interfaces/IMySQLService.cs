@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 
 namespace BASE.Service.Core.Services
 {
-    public interface IPostgresSQLService
+    public interface IMySQLService
     {
         /// <summary>
         /// Truy vấn lấy dữ liệu
@@ -110,5 +110,25 @@ namespace BASE.Service.Core.Services
         /// <param name="record">Đối tượng cần xóa</param>
         /// <returns>true nếu xóa thành công, false nếu không xóa được bản ghi nào</returns>
         bool Delete<T>(Guid databaseID, T record);
+
+        /// <summary>
+        /// Cập nhật một trường cụ thể của bản ghi theo ID
+        /// </summary>
+        /// <typeparam name="T">Kiểu dữ liệu</typeparam>
+        /// <param name="databaseID">ID của database</param>
+        /// <param name="record">Đối tượng chứa dữ liệu và ID cần cập nhật</param>
+        /// <param name="fieldName">Tên trường cần cập nhật</param>
+        /// <returns>true nếu cập nhật thành công, false nếu không cập nhật được bản ghi nào</returns>
+        bool UpdateFieldByID<T>(Guid databaseID, T record, string fieldName);
+
+        /// <summary>
+        /// Xóa dữ liệu theo một trường cụ thể
+        /// </summary>
+        /// <typeparam name="T">Kiểu dữ liệu</typeparam>
+        /// <param name="databaseID">ID của database</param>
+        /// <param name="record">Đối tượng chứa dữ liệu làm điều kiện xóa</param>
+        /// <param name="fieldDelete">Tên trường làm điều kiện xóa</param>
+        /// <returns>true nếu xóa thành công, false nếu không xóa được bản ghi nào</returns>
+        bool DeleteByField<T>(Guid databaseID, T record, string fieldDelete);
     }
 }

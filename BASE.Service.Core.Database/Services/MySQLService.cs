@@ -1,40 +1,74 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
+using System.Linq;
 using Dapper;
-using BASE.Service.Core.Services;
-using Npgsql;
 using BASE.Service.Core.Attribute;
+using BASE.Service.Core.Services;
+using Microsoft.Extensions.Configuration;
+using MySqlConnector;
 
 namespace BASE.Service.Core.Database
 {
-    public partial class PostgresSQLService : IPostgresSQLService
+    public class MySQLService : IMySQLService
     {
+        private const string MasterConnectionKey = "ConnectionStrings:MasterMySql";
+        private readonly IConfiguration _configuration;
+
+        public MySQLService(IConfiguration configuration)
+        {
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        }
 
         #region Methods connect
 
         /// <summary>
-        /// Lấy chuỗi kết nối
+        /// Lấy chuỗi kết nối của customer từ master DB
         /// </summary>
+        /// <param name="databaseID">ID của customer database</param>
+        /// <returns>Connection string tương ứng</returns>
         public string GetConnectionString(Guid databaseID)
         {
-            return "User ID=postgres;Password=Lehung@181;Host=localhost;Port=5432;Database=db_employee;Pooling=true;";
+            var masterConnectionString = GetMasterConnectionString();
+            using var masterConnection = new MySqlConnection(masterConnectionString);
+            masterConnection.Open();
+
+            const string sql = @"SELECT ConnectionString FROM database_config WHERE DatabaseID = @DatabaseID AND IsActive = 1 LIMIT 1;";
+            var connectionString = masterConnection.QueryFirstOrDefault<string>(sql, new { DatabaseID = databaseID });
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException($"Connection string not found for databaseID: {databaseID}");
+            }
+
+            return connectionString;
+        }
+
+        private string GetMasterConnectionString()
+        {
+            var connectionString = _configuration.GetConnectionString("MasterMySql") ?? _configuration[MasterConnectionKey];
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException($"Master MySQL connection string is missing. Please configure '{MasterConnectionKey}'.");
+            }
+
+            return connectionString;
         }
 
         /// <summary>
-        /// Lấy kết nối
+        /// Lấy kết nối MySQL
         /// </summary>
-        /// <param name="cnnString"></param>
-        /// <returns></returns>
         public IDbConnection GetConnection(Guid databaseID)
         {
             var cnnString = GetConnectionString(databaseID);
-            if (string.IsNullOrEmpty(cnnString))
+            if (string.IsNullOrWhiteSpace(cnnString))
             {
                 throw new Exception("Connection string is null or empty.");
             }
-            var cnn = new NpgsqlConnection(cnnString);
+
+            var cnn = new MySqlConnection(cnnString);
             return cnn;
         }
 
@@ -71,7 +105,7 @@ namespace BASE.Service.Core.Database
         #region Methods helper
 
         /// <summary>
-        /// Lấy tên bảng trong Database
+        /// Lấy tên bảng hoặc view trong Database
         /// </summary>
         /// <param name="hasSchema"></param>
         /// <returns></returns>
@@ -163,7 +197,7 @@ namespace BASE.Service.Core.Database
                 OpenConnection(cnn);
                 string tableName = GetViewOrTableName<T>();
                 string primaryKey = GetPrimaryKeyFiled<T>();
-                string script = $"select * from {tableName} where {primaryKey} in(:ids);";
+                string script = $"select * from {tableName} where {primaryKey} in @ids;";
                 var param = new Dictionary<string, object>();
                 param.Add("ids", ids);
                 return Query<T>(databaseID, script, param, CommandType.Text).ToList();
@@ -352,7 +386,7 @@ namespace BASE.Service.Core.Database
                     .Where(p => !p.GetCustomAttributes(typeof(NotMappedAttribute), false).Any());
 
                 string sql = $@"INSERT INTO {tableName} ({string.Join(", ", properties.Select(p => p.Name))}) 
-                    VALUES ({string.Join(", ", properties.Select(p => $":{p.Name}"))})";
+                    VALUES ({string.Join(", ", properties.Select(p => $"@{p.Name}"))})";
 
                 var parameters = new DynamicParameters();
                 foreach (var prop in properties)
@@ -391,9 +425,9 @@ namespace BASE.Service.Core.Database
                 // Build SET clause
                 var setColumns = string.Join(", ", properties
                     .Where(p => p.Name != primaryKey)
-                    .Select(p => $"{p.Name} = :{p.Name}"));
+                    .Select(p => $"{p.Name} = @{p.Name}"));
 
-                var sql = $"UPDATE {tableName} SET {setColumns} WHERE {primaryKey} = :{primaryKey}";
+                var sql = $"UPDATE {tableName} SET {setColumns} WHERE {primaryKey} = @{primaryKey}";
 
                 var parameters = new DynamicParameters();
                 foreach (var prop in properties)
@@ -431,7 +465,7 @@ namespace BASE.Service.Core.Database
                 var property = properties.FirstOrDefault(p => p.Name == primaryKey);
                 var primaryKeyValue = property?.GetValue(record);
 
-                var sql = $"DELETE FROM {tableName} WHERE {primaryKey} = :id";
+                var sql = $"DELETE FROM {tableName} WHERE {primaryKey} = @id";
                 var parameters = new DynamicParameters();
                 parameters.Add("id", primaryKeyValue);
 
@@ -443,7 +477,100 @@ namespace BASE.Service.Core.Database
             }
         }
 
-        #endregion
+        /// <summary>
+        /// Cập nhật một trường cụ thể của bản ghi theo ID
+        /// </summary>
+        /// <typeparam name="T">Kiểu dữ liệu</typeparam>
+        /// <param name="databaseID">ID của database</param>
+        /// <param name="record">Đối tượng chứa dữ liệu và ID cần cập nhật</param>
+        /// <param name="fieldName">Tên trường cần cập nhật</param>
+        /// <returns>true nếu cập nhật thành công, false nếu không cập nhật được bản ghi nào</returns>
+        public bool UpdateFieldByID<T>(Guid databaseID, T record, string fieldName)
+        {
+            IDbConnection cnn = null;
+            try
+            {
+                cnn = GetConnection(databaseID);
+                OpenConnection(cnn);
 
+                var tableName = GetTableName<T>();
+                var primaryKey = GetPrimaryKeyFiled<T>();
+                
+                // Kiểm tra trường cần cập nhật có tồn tại không
+                var properties = typeof(T).GetProperties()
+                    .Where(p => !p.GetCustomAttributes(typeof(NotMappedAttribute), false).Any());
+                
+                var fieldProperty = properties.FirstOrDefault(p => p.Name == fieldName);
+                if (fieldProperty == null)
+                {
+                    throw new Exception($"Field '{fieldName}' does not exist in type {typeof(T).Name}");
+                }
+
+                // Lấy giá trị của khóa chính
+                var primaryKeyProperty = properties.FirstOrDefault(p => p.Name == primaryKey);
+                var primaryKeyValue = primaryKeyProperty?.GetValue(record);
+                
+                // Lấy giá trị của trường cần cập nhật
+                var fieldValue = fieldProperty.GetValue(record);
+
+                // Tạo câu lệnh SQL chỉ cập nhật trường cần thiết
+                var sql = $"UPDATE {tableName} SET {fieldName} = @{fieldName} WHERE {primaryKey} = @{primaryKey}";
+
+                var parameters = new DynamicParameters();
+                parameters.Add(primaryKey, primaryKeyValue);
+                parameters.Add(fieldName, fieldValue);
+
+                return Execute(databaseID, sql, parameters) > 0;
+            }
+            finally
+            {
+                CloseConnection(cnn);
+            }
+        }
+
+        /// <summary>
+        /// Xóa dữ liệu theo một trường cụ thể
+        /// </summary>
+        /// <typeparam name="T">Kiểu dữ liệu</typeparam>
+        /// <param name="databaseID">ID của database</param>
+        /// <param name="record">Đối tượng chứa dữ liệu làm điều kiện xóa</param>
+        /// <param name="fieldDelete">Tên trường làm điều kiện xóa</param>
+        /// <returns>true nếu xóa thành công, false nếu không xóa được bản ghi nào</returns>
+        public bool DeleteByField<T>(Guid databaseID, T record, string fieldDelete)
+        {
+            IDbConnection cnn = null;
+            try
+            {
+                cnn = GetConnection(databaseID);
+                OpenConnection(cnn);
+
+                string tableName = GetTableName<T>();
+                
+                // Kiểm tra trường cần xóa có tồn tại không
+                var properties = typeof(T).GetProperties()
+                    .Where(p => !p.GetCustomAttributes(typeof(NotMappedAttribute), false).Any());
+                
+                var fieldProperty = properties.FirstOrDefault(p => p.Name == fieldDelete);
+                if (fieldProperty == null)
+                {
+                    throw new Exception($"Field '{fieldDelete}' does not exist in type {typeof(T).Name}");
+                }
+
+                // Lấy giá trị của trường làm điều kiện xóa
+                var fieldValue = fieldProperty.GetValue(record);
+
+                var sql = $"DELETE FROM {tableName} WHERE {fieldDelete} = @{fieldDelete}";
+                var parameters = new DynamicParameters();
+                parameters.Add(fieldDelete, fieldValue);
+
+                return Execute(databaseID, sql, parameters) > 0;
+            }
+            finally
+            {
+                CloseConnection(cnn);
+            }
+        }
+
+        #endregion
     }
 }

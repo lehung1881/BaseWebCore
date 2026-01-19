@@ -1,0 +1,50 @@
+# Cursor Rules for BaseWebCore
+
+## Mẫu code
+1. Sử dụng Pascal Case cho tên class, interface, và các thành phần public
+2. Sử dụng Camel Case cho tên biến cục bộ
+3. Prefix interface với chữ "I" (ví dụ: IUserService)
+4. Sử dụng async/await cho các thao tác bất đồng bộ
+
+## Quy ước đặt tên
+1. Controller: Thêm hậu tố "Controller" (ví dụ: UserController)
+2. Service: Thêm hậu tố "Service" (ví dụ: UserService)
+3. Repository: Thêm hậu tố "Repository" (ví dụ: UserRepository)
+4. Interface: Prefix với "I" (ví dụ: IUserRepository)
+5. DTO: Thêm hậu tố "DTO" hoặc đặt trong namespace có chứa "DTO"
+
+## Cấu trúc thư mục
+1. Các controller đặt trong thư mục Controllers
+2. Các model đặt trong project BASE.Service.Core.Model
+3. Các service đặt trong project BASE.Service.Core.BL
+4. Các repository đặt trong project BASE.Service.Core.Database
+
+## Cấu trúc response API
+```csharp
+{
+    "Success": true/false,
+    "Data": { /* Dữ liệu trả về */ },
+    "Message": "Thông báo",
+    "ErrorCode": 0 // 0 nếu thành công, mã lỗi nếu thất bại
+}
+```
+
+## Logging
+1. Sử dụng ILogger<T> tiêm qua DI
+2. Log lỗi với mức độ Error
+3. Log thông tin với mức độ Information hoặc Debug
+
+## Xác thực & Phân quyền
+1. Sử dụng JWT Bearer token
+2. Áp dụng [Authorize] attribute cho các endpoint cần xác thực
+3. Sử dụng claims-based authorization cho phân quyền chi tiết
+
+## Xử lý lỗi
+1. Sử dụng try-catch cho các khối code có thể phát sinh lỗi
+2. Trả về ErrorCode theo danh sách mã lỗi định nghĩa trước
+3. Sử dụng middleware để xử lý exception toàn cục
+
+## Quy trình phát triển
+1. Tạo nhánh feature cho mỗi tính năng mới
+2. Yêu cầu code review trước khi merge
+3. Đảm bảo code pass tất cả unit tests trước khi commit 
