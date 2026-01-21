@@ -1,14 +1,9 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
-using System.Linq;
-using Dapper;
-using BASE.Service.Core.Attribute;
 using BASE.Service.Core.Services;
-using Microsoft.Extensions.Configuration;
+using Dapper;
 using MySqlConnector;
 
 namespace BASE.Service.Core.Database
@@ -16,11 +11,11 @@ namespace BASE.Service.Core.Database
     public class MySQLService : IMySQLService
     {
         private const string MasterConnectionKey = "ConnectionStrings:MasterMySql";
-        private readonly IConfiguration _configuration;
+        //private readonly IConfiguration _configuration;
 
-        public MySQLService(IConfiguration configuration)
+        public MySQLService()
         {
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            //_configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         #region Methods connect
@@ -32,16 +27,18 @@ namespace BASE.Service.Core.Database
         /// <returns>Connection string tương ứng</returns>
         public string GetConnectionString(Guid databaseID)
         {
-            var masterConnectionString = GetMasterConnectionString();
-            using var masterConnection = new MySqlConnection(masterConnectionString);
-            masterConnection.Open();
+            //var masterConnectionString = GetMasterConnectionString();
+            //using var masterConnection = new MySqlConnection(masterConnectionString);
+            //masterConnection.Open();
 
-            const string sql = @"SELECT ConnectionString FROM database_config WHERE DatabaseID = @DatabaseID AND IsActive = 1 LIMIT 1;";
-            var connectionString = masterConnection.QueryFirstOrDefault<string>(sql, new { DatabaseID = databaseID });
-            if (string.IsNullOrWhiteSpace(connectionString))
-            {
-                throw new InvalidOperationException($"Connection string not found for databaseID: {databaseID}");
-            }
+            //const string sql = @"SELECT ConnectionString FROM database_config WHERE DatabaseID = @DatabaseID AND IsActive = 1 LIMIT 1;";
+            //var connectionString = masterConnection.QueryFirstOrDefault<string>(sql, new { DatabaseID = databaseID });
+            //if (string.IsNullOrWhiteSpace(connectionString))
+            //{
+            //    throw new InvalidOperationException($"Connection string not found for databaseID: {databaseID}");
+            //}
+
+            string connectionString = "Server=localhost;Port=3306;Database=db_development;Uid=lvhung;Pwd=12345678@Abc;";
 
             return connectionString;
         }
@@ -109,21 +106,13 @@ namespace BASE.Service.Core.Database
         /// </summary>
         /// <param name="hasSchema"></param>
         /// <returns></returns>
-        public string GetViewOrTableName<T>(bool hasSchema = true)
+        public string GetViewOrTableName<T>()
         {
             string tableName = "";
-            var tableAttr = (ConfigTable)typeof(T).GetCustomAttributes(typeof(ConfigTable), false).FirstOrDefault();
+            var tableAttr = (ConfigTable)typeof(T)?.GetCustomAttributes(typeof(ConfigTable), false).FirstOrDefault();
 
             string viewOrTabble = !string.IsNullOrEmpty(tableAttr.ViewName) ? tableAttr.ViewName : tableAttr.TableName;
-            if (hasSchema)
-            {
-                tableName = $"{tableAttr.Schema}.{viewOrTabble}";
-            }
-            else
-            {
-                tableName = $"{viewOrTabble}";
-            }
-            return tableName;
+            return viewOrTabble;
         }
 
         /// <summary>
@@ -135,15 +124,7 @@ namespace BASE.Service.Core.Database
         {
             string tableName = "";
             var tableAttr = (ConfigTable)typeof(T).GetCustomAttributes(typeof(ConfigTable), false).FirstOrDefault();
-            if (hasSchema)
-            {
-                tableName = $"{tableAttr.Schema}.{tableAttr.TableName}";
-            }
-            else
-            {
-                tableName = $"{tableAttr.TableName}";
-            }
-            return tableName;
+            return $"{tableAttr.TableName}";
         }
 
         /// <summary>

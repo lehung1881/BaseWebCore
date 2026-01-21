@@ -23,7 +23,7 @@ namespace BASE.Service.Core.Web
     /// Để sử dụng, tạo controller kế thừa từ class này và implement method CreateBL
     /// Route mặc định là "v1/[controller]" với [controller] là tên của controller kế thừa
     /// </remarks>
-    public abstract class BaseServicesController<TModel, TBL> : ControllerBase where TModel : BaseModelCore where TBL : BaseBL<TModel>
+    public abstract class BaseServicesController<TModel, TBL> : ControllerBase where TModel : BaseModel where TBL : BaseBL
     {
         #region Constructor and fields
         /// <summary>
@@ -111,37 +111,17 @@ namespace BASE.Service.Core.Web
         }
 
         /// <summary>
-        /// API thêm mới bản ghi
+        /// API thêm/sửa/xóa bản ghi
         /// </summary>
         /// <param name="model">Dữ liệu của bản ghi cần thêm</param>
         /// <returns>
-        [HttpPost("insert")]
-        public ServiceResponse Insert(TModel model)
+        [HttpPost("save_data_async")]
+        public async Task<ServiceResponse> SaveDataAsync(BaseModel model)
         {
             var res = new ServiceResponse();
             try
             {
-                res = BLObject.Insert(model);
-            }
-            catch (Exception ex)
-            {
-                res.OnError(ServiceResponseCode.Exception, ex.Message);
-            }
-            return res;
-        }
-
-        /// <summary>
-        /// API cập nhật bản ghi
-        /// </summary>
-        /// <param name="model">Dữ liệu mới của bản ghi</param>
-        /// <returns>
-        [HttpPost("update")]
-        public ServiceResponse Update(TModel model)
-        {
-            var res = new ServiceResponse();
-            try
-            {
-                res = BLObject.Update(model);
+                res = await BLObject.SaveDataAsync(model);
             }
             catch (Exception ex)
             {
@@ -170,36 +150,6 @@ namespace BASE.Service.Core.Web
                 {
                     res.OnSuccess(data);
                 }
-            }
-            catch (Exception ex)
-            {
-                res.OnError(ServiceResponseCode.Exception, ex.Message);
-            }
-            return res;
-        }
-
-        /// <summary>
-        /// API xóa bản ghi
-        /// </summary>
-        /// <param name="model">Bản ghi cần xóa</param>
-        /// <returns>
-        /// ServiceResponse với:
-        /// - Success = true nếu xóa thành công
-        /// - Success = false và ErrorCode tương ứng nếu có lỗi:
-        ///   + InvalidData: model không hợp lệ
-        ///   + Exception: lỗi trong quá trình xử lý
-        /// </returns>
-        /// <remarks>
-        /// HTTP POST: v1/[controller]/delete
-        /// Request body: JSON object của model
-        /// </remarks>
-        [HttpPost("delete")]
-        public ServiceResponse Delete(TModel model)
-        {
-            var res = new ServiceResponse();
-            try
-            {
-                res = BLObject.Delete(model);
             }
             catch (Exception ex)
             {

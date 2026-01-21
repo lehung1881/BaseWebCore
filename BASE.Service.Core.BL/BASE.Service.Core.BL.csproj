@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BASE.Service.Core.Database\BASE.Service.Core.Database.csproj" />
+    <ProjectReference Include="..\BASE.Service.Core.Model\BASE.Service.Core.Model.csproj" />
   </ItemGroup>
 
 </Project>

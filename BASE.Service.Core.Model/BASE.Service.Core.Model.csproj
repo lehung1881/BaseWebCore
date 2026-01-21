@@ -17,4 +17,8 @@
     <Folder Include="Utils\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\BASE.Service.Core\BASE.Service.Core.csproj" />
+  </ItemGroup>
+
 </Project>

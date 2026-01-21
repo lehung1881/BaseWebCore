@@ -19,7 +19,7 @@ namespace BASE.Service.Core.BL
         /// <summary>
         /// Lưu dữ liệu (Insert / Update / Delete) theo ModelState
         /// </summary>
-        public virtual async Task<ServiceResponse> SaveData(BaseModel model)
+        public virtual async Task<ServiceResponse> SaveDataAsync(BaseModel model)
         {
             var res = new ServiceResponse();
             IDbTransaction tran = null;
@@ -108,7 +108,7 @@ namespace BASE.Service.Core.BL
                 throw new InvalidOperationException($"Primary key not defined for table '{tableName}'");
 
             // Lấy danh sách cột từ DB (đã có cache)
-            var dbColumns = GetColumnByTableName(tableName, cnn);
+            var dbColumns = await GetColumnByTableNameAsync(tableName, cnn);
             var dbColumnSet = new HashSet<string>(dbColumns, StringComparer.OrdinalIgnoreCase);
 
             // Lấy properties có thể map
@@ -225,7 +225,7 @@ namespace BASE.Service.Core.BL
         /// <param name="models">Danh sách model cần lưu</param>
         /// <param name="batchSize">Số lượng bản ghi mỗi batch (mặc định 1000)</param>
         /// <returns>ServiceResponse chứa kết quả và thông tin lỗi (nếu có)</returns>
-        public virtual async Task<ServiceResponse> SaveListData(List<BaseModel> models, int batchSize = 1000)
+        public virtual async Task<ServiceResponse> SaveListDataAsync(List<BaseModel> models, int batchSize = 1000)
         {
             var res = new ServiceResponse();
 
@@ -412,7 +412,7 @@ namespace BASE.Service.Core.BL
             var primaryKeyName = firstModel.GetPrimaykeyField();
 
             // Lấy danh sách cột
-            var dbColumns = GetColumnByTableName(tableName, cnn);
+            var dbColumns = await GetColumnByTableNameAsync(tableName, cnn);
             var dbColumnSet = new HashSet<string>(dbColumns, StringComparer.OrdinalIgnoreCase);
             var props = GetMappableProperties(firstModel.GetType(), dbColumnSet);
 
@@ -470,7 +470,7 @@ namespace BASE.Service.Core.BL
             var tableName = firstModel.GetViewOrTableName();
             var primaryKeyName = firstModel.GetPrimaykeyField();
 
-            var dbColumns = GetColumnByTableName(tableName, cnn);
+            var dbColumns = await GetColumnByTableNameAsync(tableName, cnn);
             var dbColumnSet = new HashSet<string>(dbColumns, StringComparer.OrdinalIgnoreCase);
             var props = GetMappableProperties(firstModel.GetType(), dbColumnSet);
 
@@ -543,7 +543,7 @@ namespace BASE.Service.Core.BL
             var tableName = firstModel.GetViewOrTableName();
             var primaryKeyName = firstModel.GetPrimaykeyField();
 
-            var dbColumns = GetColumnByTableName(tableName, cnn);
+            var dbColumns = await GetColumnByTableNameAsync(tableName, cnn);
             var dbColumnSet = new HashSet<string>(dbColumns, StringComparer.OrdinalIgnoreCase);
             var props = GetMappableProperties(firstModel.GetType(), dbColumnSet);
 
@@ -582,6 +582,221 @@ namespace BASE.Service.Core.BL
             // Execute với ExecuteAsync
             var affected = await cnn.ExecuteAsync(sql, parameters, tran);
             return affected;
+        }
+
+        #endregion
+
+        #region UpdateByField Async
+
+        /// <summary>
+        /// Cập nhật dữ liệu dựa trên một trường cụ thể (không nhất thiết là Primary Key) - Async version
+        /// </summary>
+        /// <param name="request">Request chứa thông tin cập nhật</param>
+        /// <returns>ServiceResponse chứa kết quả và số bản ghi bị ảnh hưởng</returns>
+        public virtual async Task<ServiceResponse> UpdateByFieldAsync(UpdateByFieldRequest request)
+        {
+            var res = new ServiceResponse();
+            IDbConnection cnn = null;
+            IDbTransaction tran = null;
+
+            try
+            {
+                // Bước 1: Validate đầu vào
+                if (request == null)
+                {
+                    return res;
+                }
+
+                if (request.Model == null)
+                {
+                    return res;
+                }
+
+                if (string.IsNullOrWhiteSpace(request.ConditionField))
+                {
+                    res.OnError(ServiceResponseCode.InvalidData, "Tên trường điều kiện không được rỗng");
+                    return res;
+                }
+
+                if (request.ConditionValue == null)
+                {
+                    res.OnError(ServiceResponseCode.InvalidData, "Giá trị điều kiện không được null");
+                    return res;
+                }
+
+                // Bước 2: Mở connection và transaction
+                cnn = GetDbConnection();
+                if (cnn.State != ConnectionState.Open)
+                    cnn.Open();
+
+                tran = cnn.BeginTransaction();
+
+                // Bước 3: Thực hiện update
+                var affectedRows = await DoUpdateByFieldAsync(
+                    request.Model,
+                    request.ConditionField,
+                    request.ConditionValue,
+                    request.UpdateFields,
+                    cnn,
+                    tran);
+
+                // Bước 4: Kiểm tra kết quả
+                if (affectedRows == 0)
+                {
+                    tran.Rollback();
+                    res.OnError(ServiceResponseCode.NotFound,
+                        $"Không tìm thấy bản ghi nào với điều kiện {request.ConditionField} = {request.ConditionValue}");
+                    return res;
+                }
+
+                // Bước 5: Commit transaction
+                tran.Commit();
+                res.OnSuccess($"Cập nhật thành công {affectedRows} bản ghi");
+                res.Data = affectedRows;
+            }
+            catch (InvalidOperationException ex)
+            {
+                tran?.Rollback();
+                res.OnError(ServiceResponseCode.InvalidData, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                tran?.Rollback();
+                res.OnError(ServiceResponseCode.Exception, $"Lỗi khi cập nhật dữ liệu: {ex.Message}");
+            }
+            finally
+            {
+                if (cnn != null)
+                {
+                    if (cnn.State != ConnectionState.Closed)
+                        cnn.Close();
+                    cnn.Dispose();
+                }
+            }
+
+            return res;
+        }
+
+        /// <summary>
+        /// Thực thi câu lệnh UPDATE dựa trên trường tùy chỉnh - Async version
+        /// </summary>
+        /// <param name="model">Model chứa dữ liệu</param>
+        /// <param name="conditionField">Tên trường điều kiện</param>
+        /// <param name="conditionValue">Giá trị điều kiện</param>
+        /// <param name="updateFields">Danh sách trường cần update</param>
+        /// <param name="cnn">Database connection</param>
+        /// <param name="tran">Transaction</param>
+        /// <returns>Số bản ghi bị ảnh hưởng</returns>
+        private async Task<int> DoUpdateByFieldAsync(
+            BaseModel model,
+            string conditionField,
+            object conditionValue,
+            List<string> updateFields,
+            IDbConnection cnn,
+            IDbTransaction tran)
+        {
+            // Lấy thông tin bảng
+            var tableName = model.GetViewOrTableName();
+            var primaryKeyName = model.GetPrimaykeyField();
+
+            // Lấy danh sách cột từ DB
+            var dbColumns = await GetColumnByTableNameAsync(tableName, cnn);
+            var dbColumnSet = new HashSet<string>(dbColumns, StringComparer.OrdinalIgnoreCase);
+
+            // Kiểm tra trường điều kiện có tồn tại không
+            if (!dbColumnSet.Contains(conditionField))
+            {
+                throw new InvalidOperationException($"Trường '{conditionField}' không tồn tại trong bảng '{tableName}'");
+            }
+
+            // Lấy properties có thể map
+            var props = GetMappableProperties(model.GetType(), dbColumnSet);
+
+            // Kiểm tra property điều kiện
+            var conditionProp = props.FirstOrDefault(p =>
+                string.Equals(p.Name, conditionField, StringComparison.OrdinalIgnoreCase));
+
+            if (conditionProp == null)
+            {
+                throw new InvalidOperationException($"Property '{conditionField}' không tồn tại trong model");
+            }
+
+            // Xác định các trường cần update
+            IEnumerable<PropertyInfo> propsToUpdate;
+
+            // Nếu UpdateFields null hoặc rỗng → cập nhật tất cả trường (trừ PK và trường điều kiện)
+            if (updateFields == null || !updateFields.Any())
+            {
+                propsToUpdate = props
+                    .Where(p => !string.Equals(p.Name, primaryKeyName, StringComparison.OrdinalIgnoreCase))
+                    .Where(p => !string.Equals(p.Name, conditionField, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                // Update chỉ các trường được chỉ định
+                var updateSet = new HashSet<string>(updateFields, StringComparer.OrdinalIgnoreCase);
+                propsToUpdate = props.Where(p => updateSet.Contains(p.Name));
+
+                // Kiểm tra tất cả các trường được chỉ định có tồn tại không
+                var missingFields = updateFields
+                    .Where(f => !props.Any(p => string.Equals(p.Name, f, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                if (missingFields.Any())
+                {
+                    throw new InvalidOperationException($"Các trường sau không tồn tại: {string.Join(", ", missingFields)}");
+                }
+            }
+
+            var updatePropsList = propsToUpdate.ToList();
+
+            if (!updatePropsList.Any())
+            {
+                throw new InvalidOperationException("Không có trường nào để cập nhật");
+            }
+
+            // Build SQL
+            var setClause = string.Join(", ", updatePropsList.Select(p => $"`{p.Name}` = @{p.Name}"));
+            var sql = $"UPDATE `{tableName}` SET {setClause} WHERE `{conditionField}` = @ConditionValue";
+
+            // Build parameters
+            var parameters = new Dictionary<string, object>(updatePropsList.Count + 1, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var prop in updatePropsList)
+            {
+                parameters[prop.Name] = prop.GetValue(model) ?? DBNull.Value;
+            }
+
+            parameters["ConditionValue"] = conditionValue;
+
+            // Execute async
+            var affected = await cnn.ExecuteAsync(sql, parameters, tran);
+            return affected;
+        }
+
+        /// <summary>
+        /// Lấy danh sách column của bảng (cache theo database + table) - Async version
+        /// </summary>
+        protected virtual async Task<List<string>> GetColumnByTableNameAsync(string tableName, IDbConnection cnn)
+        {
+            var cacheKey = $"{tableName}_{_databaseID.ToString()}";
+
+            if (_columnCache.TryGetValue(cacheKey, out var cached))
+                return cached;
+
+            const string sql = "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @TableName AND LENGTH(generation_expression) = 0 ORDER BY ORDINAL_POSITION";
+
+            var columns = (await cnn.QueryAsync<string>(sql, new { TableName = tableName })).ToList();
+
+            lock (_columnLock)
+            {
+                if (!_columnCache.ContainsKey(cacheKey))
+                {
+                    _columnCache[cacheKey] = columns;
+                }
+            }
+
+            return columns;
         }
 
         #endregion

@@ -8,11 +8,6 @@ namespace BASE.Service.Core.Attribute
     public class ConfigTable : System.Attribute
     {
         /// <summary>
-        /// Schema của bảng trong database
-        /// </summary>
-        public string Schema { get; set; }
-
-        /// <summary>
         /// Tên bảng trong database
         /// </summary>
         public string TableName { get; set; }
@@ -28,9 +23,8 @@ namespace BASE.Service.Core.Attribute
         /// <param name="schema">Schema của bảng</param>
         /// <param name="tableName">Tên bảng</param>
         /// <param name="viewName">Tên view</param>
-        public ConfigTable(string schema, string tableName, string viewName)
+        public ConfigTable(string tableName, string viewName)
         {
-            Schema = schema;
             TableName = tableName;
             ViewName = viewName;
         }

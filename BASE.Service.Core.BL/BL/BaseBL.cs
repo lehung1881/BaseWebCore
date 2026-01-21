@@ -82,35 +82,6 @@ namespace BASE.Service.Core.BL
 
         #endregion
 
-        #region Core Save Logic (Optimized)
-
-        /// <summary>
-        /// Lấy danh sách column của bảng (cache theo database + table)
-        /// </summary>
-        protected virtual List<string> GetColumnByTableName(string tableName, IDbConnection cnn)
-        {
-            var cacheKey = $"{tableName}_{_databaseID.ToString()}";
-
-            if (_columnCache.TryGetValue(cacheKey, out var cached))
-                return cached;
-
-            const string sql = "SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = @TableName AND LENGTH(generation_expression) = 0 ORDER BY ORDINAL_POSITION";
-
-            var columns = cnn.Query<string>(sql, new { TableName = tableName }).ToList();
-
-            lock (_columnLock)
-            {
-                if (!_columnCache.ContainsKey(cacheKey))
-                {
-                    _columnCache[cacheKey] = columns;
-                }
-            }
-
-            return columns;
-        }
-
-        #endregion
-
         #region Helper Methods
 
         /// <summary>
