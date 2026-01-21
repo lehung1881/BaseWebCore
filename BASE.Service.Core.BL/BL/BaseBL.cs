@@ -12,7 +12,7 @@ namespace BASE.Service.Core.BL
     /// Base class cho Business Logic layer, cung cấp các chức năng CRUD cơ bản (MySQL + Dapper)
     /// </summary>
     /// <typeparam name="TModel">Model kế thừa từ BaseModel</typeparam>
-    public abstract class BaseBL
+    public partial class BaseBL
     {
         #region Fields & Constructor
 
@@ -68,69 +68,6 @@ namespace BASE.Service.Core.BL
         }
 
         /// <summary>
-        /// Lưu dữ liệu (Insert / Update / Delete) theo ModelState
-        /// </summary>
-        public virtual ServiceResponse SaveData(BaseModel model)
-        {
-            var res = new ServiceResponse();
-            IDbTransaction tran = null;
-            IDbConnection cnn = null;
-            try
-            {
-                if (model == null)
-                {
-                    res.OnError(ServiceResponseCode.InvalidData);
-                    return res;
-                }
-
-                var validateResults = ValidateBeforeSaveData(model);
-                if (validateResults != null && validateResults.Any())
-                {
-                    res.Success = false;
-                    res.ValidateInfo = validateResults;
-                    return res;
-                }
-
-                BeforeSaveData(model);
-
-                cnn = GetDbConnection();
-                if (cnn.State != ConnectionState.Open)
-                    cnn.Open();
-
-                tran = cnn.BeginTransaction();
-
-                var success = DoSaveData(model, cnn, tran);
-                if (!success)
-                {
-                    tran.Rollback();
-                    res.OnError(ServiceResponseCode.Exception, "SaveData failed");
-                    return res;
-                }
-
-                tran.Commit();
-                res.OnSuccess();
-
-                AfterSaveData(model, success);
-            }
-            catch (Exception ex)
-            {
-                tran?.Rollback();
-                res.OnError(ServiceResponseCode.Exception, ex.Message);
-            }
-            finally
-            {
-                if (cnn != null)
-                {
-                    if (cnn.State != ConnectionState.Closed)
-                        cnn.Close();
-                    cnn.Dispose();
-                }
-            }
-
-            return res;
-        }
-
-        /// <summary>
         /// Paging (chưa implement)
         /// </summary>
         public virtual PagingResponse GetPaging<T>(
@@ -141,23 +78,6 @@ namespace BASE.Service.Core.BL
             string sort = "")
         {
             return new PagingResponse();
-        }
-
-        #endregion
-
-        #region Hook Methods (Override)
-
-        public virtual List<ValidateResult> ValidateBeforeSaveData(BaseModel model)
-        {
-            return new List<ValidateResult>();
-        }
-
-        public virtual void BeforeSaveData(BaseModel model)
-        {
-        }
-
-        public virtual void AfterSaveData(BaseModel model, bool isSuccess)
-        {
         }
 
         #endregion
@@ -189,43 +109,6 @@ namespace BASE.Service.Core.BL
             return columns;
         }
 
-        /// <summary>
-        /// Thực hiện Insert / Update / Delete theo ModelState (MySQL) - Optimized version
-        /// </summary>
-        protected virtual bool DoSaveData(BaseModel model, IDbConnection cnn, IDbTransaction tran)
-        {
-            if (model == null)
-                throw new ArgumentNullException(nameof(model));
-
-            var tableName = model.GetViewOrTableName();
-            var primaryKeyName = model.GetPrimaykeyField();
-
-            if (string.IsNullOrEmpty(primaryKeyName))
-                throw new InvalidOperationException($"Primary key not defined for table '{tableName}'");
-
-            // Lấy danh sách cột từ DB (đã có cache)
-            var dbColumns = GetColumnByTableName(tableName, cnn);
-            var dbColumnSet = new HashSet<string>(dbColumns, StringComparer.OrdinalIgnoreCase);
-
-            // Lấy properties có thể map
-            var props = GetMappableProperties(model.GetType(), dbColumnSet);
-
-            var pkProp = props.FirstOrDefault(p =>
-                string.Equals(p.Name, primaryKeyName, StringComparison.OrdinalIgnoreCase));
-
-            if (pkProp == null)
-                throw new InvalidOperationException($"Primary key '{primaryKeyName}' not found in model properties");
-
-            // Xử lý theo ModelState
-            return model.ModelState switch
-            {
-                ModelState.Insert => ExecuteInsert(model, tableName, props, pkProp, cnn, tran),
-                ModelState.Update => ExecuteUpdate(model, tableName, props, pkProp, primaryKeyName, cnn, tran),
-                ModelState.Delete => ExecuteDelete(model, tableName, pkProp, primaryKeyName, cnn, tran),
-                _ => throw new InvalidOperationException($"Unsupported ModelState: {model.ModelState}")
-            };
-        }
-
         #endregion
 
         #region Helper Methods
@@ -240,95 +123,6 @@ namespace BASE.Service.Core.BL
                 .Where(p => p.GetCustomAttribute<NotMappedAttribute>() == null)
                 .Where(p => dbColumnSet.Contains(p.Name))
                 .ToList();
-        }
-
-        /// <summary>
-        /// Thực thi câu lệnh INSERT
-        /// </summary>
-        private static bool ExecuteInsert(
-            BaseModel model,
-            string tableName,
-            List<PropertyInfo> props,
-            PropertyInfo pkProp,
-            IDbConnection cnn,
-            IDbTransaction tran)
-        {
-            // Tự động sinh Guid PK nếu cần
-            EnsurePrimaryKey(model, pkProp);
-
-            // Build SQL
-            var columns = string.Join(", ", props.Select(p => $"`{p.Name}`"));
-            var values = string.Join(", ", props.Select(p => $"@{p.Name}"));
-            var sql = $"INSERT INTO `{tableName}` ({columns}) VALUES ({values})";
-
-            // Execute
-            var parameters = BuildParameters(props, model);
-            var affected = cnn.Execute(sql, parameters, tran);
-
-            return affected > 0;
-        }
-
-        /// <summary>
-        /// Thực thi câu lệnh UPDATE
-        /// </summary>
-        private static bool ExecuteUpdate(
-            BaseModel model,
-            string tableName,
-            List<PropertyInfo> props,
-            PropertyInfo pkProp,
-            string primaryKeyName,
-            IDbConnection cnn,
-            IDbTransaction tran)
-        {
-            // Lọc các cột cần update
-            var updateProps = GetUpdateProperties(props, model.UpdateColumns, primaryKeyName);
-
-            if (!updateProps.Any())
-                return true; // Không có gì để update
-
-            // Build SQL
-            var setClause = string.Join(", ", updateProps.Select(p => $"`{p.Name}` = @{p.Name}"));
-            var sql = $"UPDATE `{tableName}` SET {setClause} WHERE `{primaryKeyName}` = @{primaryKeyName}";
-
-            // Execute
-            var parameters = BuildParameters(props, model);
-            var affected = cnn.Execute(sql, parameters, tran);
-
-            return affected >= 0; // MySQL: affected = 0 vẫn OK
-        }
-
-        /// <summary>
-        /// Thực thi câu lệnh DELETE (Hard Delete)
-        /// </summary>
-        private static bool ExecuteDelete(
-            BaseModel model,
-            string tableName,
-            PropertyInfo pkProp,
-            string primaryKeyName,
-            IDbConnection cnn,
-            IDbTransaction tran)
-        {
-            // Lấy giá trị Primary Key
-            var pkValue = pkProp.GetValue(model);
-
-            if (pkValue == null || (pkProp.PropertyType == typeof(Guid) && (Guid)pkValue == Guid.Empty))
-            {
-                throw new InvalidOperationException($"Primary key '{primaryKeyName}' must have a valid value for delete operation");
-            }
-
-            // Build SQL
-            var sql = $"DELETE FROM `{tableName}` WHERE `{primaryKeyName}` = @{primaryKeyName}";
-
-            // Build parameters
-            var parameters = new Dictionary<string, object>(1, StringComparer.OrdinalIgnoreCase)
-            {
-                [primaryKeyName] = pkValue
-            };
-
-            // Execute
-            var affected = cnn.Execute(sql, parameters, tran);
-
-            return affected > 0;
         }
 
         /// <summary>
