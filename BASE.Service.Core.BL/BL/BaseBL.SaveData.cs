@@ -47,7 +47,7 @@ namespace BASE.Service.Core.BL
                 await BeforeSaveData(model);
 
                 // Bước 4: Mở connection
-                cnn = GetDbConnection();
+                cnn = await GetConnectionAsync();
                 if (cnn.State != ConnectionState.Open)
                     cnn.Open();
 
@@ -313,7 +313,7 @@ namespace BASE.Service.Core.BL
             try
             {
                 // Bước 1: Mở connection
-                cnn = GetDbConnection();
+                cnn = await GetConnectionAsync();
                 if (cnn.State != ConnectionState.Open)
                     cnn.Open();
 
@@ -625,7 +625,7 @@ namespace BASE.Service.Core.BL
                 }
 
                 // Bước 2: Mở connection và transaction
-                cnn = GetDbConnection();
+                cnn = await GetConnectionAsync();
                 if (cnn.State != ConnectionState.Open)
                     cnn.Open();
 

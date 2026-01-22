@@ -7,7 +7,7 @@ namespace BASE.Service.Core.Database
     {
         public static void UseDatabaseServices(this IServiceCollection service)
         {
-            service.AddTransient<IPostgresSQLService, PostgresSQLService>();
+            service.AddTransient<IMySQLService, MySQLService>();
         }
     }
 }

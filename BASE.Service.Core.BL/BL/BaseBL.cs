@@ -27,7 +27,7 @@ namespace BASE.Service.Core.BL
         protected IAuthService _authService => _serviceCollection.AuthService();
         protected IMySQLService _mySQLService => _serviceCollection.MySQLService();
 
-        protected Guid _databaseID = Guid.NewGuid();
+        protected Guid _databaseID = Guid.Parse("496f89b1-8f25-4c32-b6d6-d18b8bbb8ef8");
 
         protected BaseBL(CoreWebServiceCollection serviceCollection)
         {
@@ -54,9 +54,9 @@ namespace BASE.Service.Core.BL
         /// <summary>
         /// Lấy connection theo databaseID (customer DB)
         /// </summary>
-        protected virtual IDbConnection GetDbConnection()
+        protected virtual async Task<IDbConnection> GetConnectionAsync()
         {
-            return _mySQLService.GetConnection(_databaseID);
+            return await _mySQLService.GetConnectionAsync(_databaseID);
         }
 
         /// <summary>
