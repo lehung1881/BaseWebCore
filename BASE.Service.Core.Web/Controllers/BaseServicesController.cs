@@ -23,9 +23,31 @@ namespace BASE.Service.Core.Web
     /// Để sử dụng, tạo controller kế thừa từ class này và implement method CreateBL
     /// Route mặc định là "v1/[controller]" với [controller] là tên của controller kế thừa
     /// </remarks>
-    public abstract class BaseServicesController<TModel, TBL> : ControllerBase where TModel : BaseModel where TBL : BaseBL
+    public abstract class BaseServicesController<TBL> : ControllerBase where TBL : BaseBL
     {
         #region Constructor and fields
+
+        /// <summary>
+        /// Type of model
+        /// </summary>
+        private Type _currentModelType;
+
+        protected Type CurrentModelType
+        {
+            get
+            {
+                if (_currentModelType == null)
+                {
+                    throw new NotImplementedException("DEV: Chưa gán property 'CurrentModelType' cho Controller");
+                }
+                return _currentModelType;
+            }
+            set
+            {
+                _currentModelType = value;
+            }
+        }
+
         /// <summary>
         /// Collection chứa các services được inject
         /// </summary>
@@ -92,12 +114,12 @@ namespace BASE.Service.Core.Web
         /// <param name="id">ID của bản ghi cần lấy</param>
         /// <returns>
         [HttpGet("{id}")]
-        public ServiceResponse GetByID(Guid id)
+        public async Task<ServiceResponse> GetByID(string id)
         {
             var res = new ServiceResponse();
             try
             {
-                var data = BLObject.GetByID(id);
+                var data = await BLObject.GetDataByID(this.CurrentModelType.GetType(), id);
                 if (data != null)
                 {
                     res.OnSuccess(data);
@@ -141,7 +163,7 @@ namespace BASE.Service.Core.Web
             var res = new ServiceResponse();
             try
             {
-                PagingResponse data = BLObject.GetPaging<TModel>(request.pageIndex, request.pageSize, request.filters, request.view, request.sort);
+                PagingResponse data = BLObject.GetPaging(request.pageIndex, request.pageSize, request.filters, request.view, request.sort);
                 if (data == null)
                 {
                     res.OnError(ServiceResponseCode.NotFound);

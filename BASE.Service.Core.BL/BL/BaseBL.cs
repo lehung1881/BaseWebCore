@@ -1,7 +1,5 @@
-using BASE.Service.Core.Enum;
 using BASE.Service.Core.Model;
 using BASE.Service.Core.Services;
-using Dapper;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
 using System.Reflection;
@@ -56,21 +54,29 @@ namespace BASE.Service.Core.BL
         /// </summary>
         protected virtual async Task<IDbConnection> GetConnectionAsync()
         {
-            return await _mySQLService.GetConnectionAsync(_databaseID);
+            return await _mySQLService.GetDBConnectionAsync(_databaseID);
         }
 
         /// <summary>
         /// Lấy bản ghi theo ID
         /// </summary>
-        public virtual BaseModel GetByID(Guid id)
+        public async Task<T> GetDataByID<T>(string id) where T : BaseModel
         {
-            return _mySQLService.GetByID<BaseModel>(_databaseID, id);
+            return await _mySQLService.GetDataByID<T>(_databaseID, id);
+        }
+
+        /// <summary>
+        /// Lấy bản ghi theo ID
+        /// </summary>
+        public async Task<BaseModel> GetDataByID(Type modelType, string id, string columns = "*")
+        {
+            return await _mySQLService.GetDataByID(_databaseID, modelType, id);
         }
 
         /// <summary>
         /// Paging (chưa implement)
         /// </summary>
-        public virtual PagingResponse GetPaging<T>(
+        public virtual PagingResponse GetPaging(
             int pageIndex,
             int pageSize,
             List<FilterCondition> filters,
