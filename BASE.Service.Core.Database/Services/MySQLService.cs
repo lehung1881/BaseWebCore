@@ -539,15 +539,6 @@ namespace BASE.Service.Core.Database
         }
 
         /// <summary>
-        /// Lấy tên bảng từ model type
-        /// </summary>
-        private string GetTableName(Type modelType)
-        {
-            var tableAttr = modelType.GetCustomAttribute<TableAttribute>();
-            return tableAttr?.Name ?? modelType.Name;
-        }
-
-        /// <summary>
         /// Sinh giá trị where dựa vào kiểu dữ liệu parameter
         /// </summary>
         /// <param name="value">Parameter</param>
